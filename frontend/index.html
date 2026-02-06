@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Health Monitoring System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container" id="app">
+        <!-- Header -->
+        <header class="header">
+            <h1>Device Health Monitoring System</h1>
+            <p class="subtitle">AI-powered predictive maintenance</p>
+        </header>
+
+        <!-- Demo Buttons -->
+        <div class="button-group">
+            <button id="btn-normal" class="btn btn-normal" onclick="testSample('normal')">
+                <span class="btn-icon">✓</span>
+                Test Normal Sample
+            </button>
+            <button id="btn-faulty" class="btn btn-faulty" onclick="testSample('faulty')">
+                <span class="btn-icon">⚠</span>
+                Test Faulty Sample
+            </button>
+        </div>
+
+        <!-- File Upload Section (NEW) -->
+        <div class="upload-section">
+            <p class="upload-label">Or analyze your own file:</p>
+            <div class="upload-controls">
+                <input type="file" id="file-input" accept=".wav,.mat,.mp4,.mp3,.m4a,.flac" onchange="onFileSelected()">
+                <button id="btn-upload" class="btn btn-upload" onclick="analyzeUploadedFile()" disabled>
+                    <span class="btn-icon">📤</span>
+                    Analyze Uploaded File
+                </button>
+            </div>
+            <p class="upload-hint">Supports .wav, .mat, .mp4, .mp3 and more</p>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p>Analyzing...</p>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results" class="results hidden">
+            <!-- Hero Card - Health Score -->
+            <div class="hero-card" id="hero-card">
+                <div class="health-score-container">
+                    <span class="health-label">Health Score</span>
+                    <span class="health-score" id="health-score">—</span>
+                </div>
+                <div class="status-badge" id="status-badge">—</div>
+            </div>
+
+            <!-- Details Card -->
+            <div class="details-card">
+                <div class="detail-row">
+                    <span class="detail-label">Status</span>
+                    <span class="detail-value" id="detail-status">—</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Anomaly Score</span>
+                    <span class="detail-value" id="detail-anomaly">—</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Confidence</span>
+                    <span class="detail-value" id="detail-confidence">—</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Failure Type</span>
+                    <span class="detail-value" id="detail-failure">—</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Processing Time</span>
+                    <span class="detail-value" id="detail-time">—</span>
+                </div>
+            </div>
+
+            <!-- Explanation -->
+            <div class="explanation-card" id="explanation-card">
+                <p id="explanation-text">—</p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>How it works: <strong>Autoencoder</strong> for anomaly detection + <strong>Random Forest</strong> for
+                fault diagnosis</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

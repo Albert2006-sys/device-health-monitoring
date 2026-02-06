@@ -1,0 +1,347 @@
+/* === Base Styles === */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    min-height: 100vh;
+    color: #ffffff;
+    transition: background 0.5s ease;
+}
+
+body.status-normal {
+    background: linear-gradient(135deg, #064e3b 0%, #1a1a2e 100%);
+}
+
+body.status-faulty {
+    background: linear-gradient(135deg, #7f1d1d 0%, #1a1a2e 100%);
+}
+
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    text-align: center;
+}
+
+/* === Header === */
+.header {
+    margin-bottom: 40px;
+}
+
+.header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    background: linear-gradient(90deg, #60a5fa, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.subtitle {
+    font-size: 1rem;
+    color: #94a3b8;
+}
+
+/* === Buttons === */
+.button-group {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 16px 32px;
+    font-size: 1rem;
+    font-weight: 600;
+    border: 2px solid;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-normal {
+    border-color: #22c55e;
+    color: #22c55e;
+}
+
+.btn-normal:hover:not(:disabled) {
+    background: #22c55e;
+    color: #000;
+}
+
+.btn-faulty {
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+.btn-faulty:hover:not(:disabled) {
+    background: #ef4444;
+    color: #fff;
+}
+
+.btn-icon {
+    font-size: 1.2rem;
+}
+
+/* === Upload Section (NEW) === */
+.upload-section {
+    margin-bottom: 40px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+}
+
+.upload-label {
+    font-size: 0.875rem;
+    color: #94a3b8;
+    margin-bottom: 16px;
+}
+
+.upload-controls {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+#file-input {
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.875rem;
+    max-width: 200px;
+}
+
+#file-input::file-selector-button {
+    padding: 6px 12px;
+    background: #3b82f6;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    margin-right: 8px;
+}
+
+.btn-upload {
+    border-color: #3b82f6;
+    color: #3b82f6;
+}
+
+.btn-upload:hover:not(:disabled) {
+    background: #3b82f6;
+    color: #fff;
+}
+
+.upload-hint {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 12px;
+}
+
+/* === Loading === */
+.loading {
+    padding: 40px;
+}
+
+.loading p {
+    margin-top: 16px;
+    color: #94a3b8;
+}
+
+.spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid #334155;
+    border-top-color: #60a5fa;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* === Results === */
+.results {
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* === Hero Card === */
+.hero-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
+    padding: 40px;
+    margin-bottom: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.health-score-container {
+    margin-bottom: 20px;
+}
+
+.health-label {
+    display: block;
+    font-size: 0.875rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+}
+
+.health-score {
+    font-size: 6rem;
+    font-weight: 800;
+    line-height: 1;
+    transition: color 0.3s ease;
+}
+
+.health-score.score-green {
+    color: #22c55e;
+}
+
+.health-score.score-orange {
+    color: #f59e0b;
+}
+
+.health-score.score-red {
+    color: #ef4444;
+}
+
+/* === Status Badge === */
+.status-badge {
+    display: inline-block;
+    padding: 8px 24px;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.status-badge.badge-normal {
+    background: #22c55e;
+    color: #000;
+}
+
+.status-badge.badge-faulty {
+    background: #ef4444;
+    color: #fff;
+}
+
+/* === Details Card === */
+.details-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    color: #94a3b8;
+    font-size: 0.875rem;
+}
+
+.detail-value {
+    font-weight: 600;
+    color: #fff;
+}
+
+/* === Explanation Card === */
+.explanation-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.explanation-card p {
+    font-style: italic;
+    color: #cbd5e1;
+    line-height: 1.6;
+}
+
+/* === Footer === */
+.footer {
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer p {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.footer strong {
+    color: #94a3b8;
+}
+
+/* === Utilities === */
+.hidden {
+    display: none !important;
+}
+
+/* === Responsive === */
+@media (max-width: 480px) {
+    .header h1 {
+        font-size: 1.5rem;
+    }
+
+    .health-score {
+        font-size: 4rem;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
