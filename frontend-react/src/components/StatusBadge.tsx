@@ -4,7 +4,7 @@ import { ConfidenceLevel } from '../types/analysis';
 import { useState } from 'react';
 
 interface StatusBadgeProps {
-    status: 'normal' | 'faulty';
+    status: 'normal' | 'warning' | 'faulty';
     confidence: number | null;
     failureType?: string | null;
     outOfDistribution?: boolean;
@@ -39,8 +39,17 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
 }) => {
     const [showTooltip, setShowTooltip] = useState(false);
     const isNormal = status === 'normal';
+    const isWarning = status === 'warning';
+    const isFaulty = status === 'faulty';
     const confidenceLevel = getConfidenceLevel(confidence);
     const conf = confidenceConfig[confidenceLevel];
+
+    const glowClass = isNormal ? 'glow-green' : isWarning ? 'glow-yellow' : 'glow-red';
+    const textColor = isNormal
+        ? 'text-primary-green'
+        : isWarning
+            ? 'text-yellow-400'
+            : 'text-primary-red';
 
     return (
         <motion.div
@@ -51,19 +60,19 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
         >
             {/* Status Badge */}
             <motion.div
-                className={`flex items-center gap-3 px-6 py-4 rounded-2xl glass-card ${isNormal ? 'glow-green' : 'glow-red'
-                    }`}
+                className={`flex items-center gap-3 px-6 py-4 rounded-2xl glass-card ${glowClass}`}
                 whileHover={{ scale: 1.02 }}
                 transition={{ type: 'spring', stiffness: 300 }}
             >
                 {isNormal ? (
                     <CheckCircle className="w-8 h-8 text-primary-green" />
+                ) : isWarning ? (
+                    <AlertTriangle className="w-8 h-8 text-yellow-400" />
                 ) : (
                     <AlertTriangle className="w-8 h-8 text-primary-red" />
                 )}
                 <div>
-                    <h3 className={`text-2xl font-heading font-bold ${isNormal ? 'text-primary-green' : 'text-primary-red'
-                        }`}>
+                    <h3 className={`text-2xl font-heading font-bold ${textColor}`}>
                         {status.toUpperCase()}
                     </h3>
                     {failureType && (

@@ -13,6 +13,13 @@ export interface PhysicsValidation {
         description?: string;
         kurtosis_threshold?: number;
     };
+    agree_windows?: number;
+    disagree_windows?: number;
+    na_windows?: number;
+    total_windows?: number;
+    agree_ratio?: number;
+    summary?: string;
+    modulation_applied?: string | null;
 }
 
 export interface FailureFingerprint {
@@ -69,8 +76,24 @@ export interface ReasoningData {
     anomaly_ratio?: number;
 }
 
+export interface WindowSummary {
+    total: number;
+    anomalous: number;
+    ratio: number;
+    overlap: number;
+    window_duration: number;
+    hop_duration: number;
+}
+
+export interface WindowStats {
+    total_windows: number;
+    anomalous_windows: number;
+    anomaly_ratio: number;
+    overlap: number;
+}
+
 export interface AnalysisResult {
-    status: 'normal' | 'faulty';
+    status: 'normal' | 'warning' | 'faulty';
     health_score: number;
     anomaly_score: number;
     failure_type: string | null;
@@ -83,6 +106,8 @@ export interface AnalysisResult {
     failure_fingerprint?: FailureFingerprint;
     maintenance_advice?: MaintenanceAdvice;
     window_results?: WindowResult[];
+    window_summary?: WindowSummary;
+    window_stats?: WindowStats;
     audio_duration?: number;
 }
 

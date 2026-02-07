@@ -1,7 +1,10 @@
 flask
 flask-cors
+gunicorn
 numpy
 scipy
 librosa
 scikit-learn
-keras
+torch
+moviepy
+soundfile

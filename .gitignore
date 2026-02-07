@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.venv/
+.vite/
+node_modules/
+dist/
+.vscode/
+*.egg-info/

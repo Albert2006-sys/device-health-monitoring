@@ -2,6 +2,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Copy, Check, Terminal, Server, Zap, Database } from 'lucide-react';
 import { useState } from 'react';
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
 interface ApiModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -86,7 +88,7 @@ export const ApiModal: React.FC<ApiModalProps> = ({ isOpen, onClose }) => {
                                         <h3 className="text-lg font-heading font-semibold text-white">Base URL</h3>
                                     </div>
                                     <div className="bg-dark-1 border border-white/10 rounded-lg px-4 py-3 font-mono text-primary-green">
-                                        http://localhost:5000
+                                        {API_BASE}
                                     </div>
                                 </section>
 
@@ -127,17 +129,17 @@ export const ApiModal: React.FC<ApiModalProps> = ({ isOpen, onClose }) => {
                                     <div className="space-y-4">
                                         <div>
                                             <p className="text-gray-400 text-sm mb-2">Demo (Normal Sample):</p>
-                                            <CodeBlock code={`curl http://localhost:5000/analyze/demo?type=normal`} />
+                                            <CodeBlock code={`curl ${API_BASE}/analyze/demo?type=normal`} />
                                         </div>
 
                                         <div>
                                             <p className="text-gray-400 text-sm mb-2">Demo (Faulty Sample):</p>
-                                            <CodeBlock code={`curl http://localhost:5000/analyze/demo?type=faulty`} />
+                                            <CodeBlock code={`curl ${API_BASE}/analyze/demo?type=faulty`} />
                                         </div>
 
                                         <div>
                                             <p className="text-gray-400 text-sm mb-2">File Upload:</p>
-                                            <CodeBlock code={`curl -X POST -F "file=@machine_audio.wav" http://localhost:5000/analyze`} />
+                                            <CodeBlock code={`curl -X POST -F "file=@machine_audio.wav" ${API_BASE}/analyze`} />
                                         </div>
                                     </div>
                                 </section>
@@ -187,7 +189,7 @@ export const ApiModal: React.FC<ApiModalProps> = ({ isOpen, onClose }) => {
 
                                 {/* Rate Limits */}
                                 <section className="text-center text-gray-500 text-sm py-4">
-                                    <p>⚡ No rate limits for demo • 📡 Local API only • 🔓 No authentication required</p>
+                                    <p>&#9889; No rate limits for demo &#x2022; &#128225; REST API &#x2022; &#128275; No authentication required</p>
                                 </section>
                             </div>
                         </div>

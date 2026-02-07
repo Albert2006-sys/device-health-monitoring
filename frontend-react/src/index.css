@@ -1,5 +1,6 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Rajdhani:wght@500;600;700&display=swap');
+@source "..";
+
 
 @theme {
   --color-primary-blue: #00D9FF;
@@ -64,6 +65,11 @@ body {
 .glow-green {
   box-shadow: 0 0 15px rgba(0, 255, 159, 0.3),
     0 0 30px rgba(0, 255, 159, 0.1);
+}
+
+.glow-yellow {
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.3),
+    0 0 30px rgba(255, 215, 0, 0.1);
 }
 
 .glow-red {

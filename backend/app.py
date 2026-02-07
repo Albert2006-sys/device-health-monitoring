@@ -123,19 +123,11 @@ def analyze_file():
         end_time = time.perf_counter()
         processing_ms = int((end_time - start_time) * 1000)
         
-        # Build response
-        response = {
-            "status": result["status"],
-            "health_score": result["health_score"],
-            "anomaly_score": result["anomaly_score"],
-            "failure_type": result["failure_type"],
-            "confidence": result["confidence"],
-            "explanation": result["explanation"],
-            "processing_ms": processing_ms
-        }
+        # Build response - pass through all analysis fields + processing time
+        response = {**result, "processing_ms": processing_ms}
         
         return jsonify(response), 200
-    
+
     except Exception as e:
         # Clean up temp file if exists
         if 'temp_file' in locals() and temp_file:
@@ -186,16 +178,8 @@ def analyze_demo():
         end_time = time.perf_counter()
         processing_ms = int((end_time - start_time) * 1000)
         
-        # Build response
-        response = {
-            "status": result["status"],
-            "health_score": result["health_score"],
-            "anomaly_score": result["anomaly_score"],
-            "failure_type": result["failure_type"],
-            "confidence": result["confidence"],
-            "explanation": result["explanation"],
-            "processing_ms": processing_ms
-        }
+        # Build response - pass through all analysis fields + processing time
+        response = {**result, "processing_ms": processing_ms}
         
         return jsonify(response), 200
     
@@ -207,9 +191,11 @@ def analyze_demo():
 
 
 if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
     print("Starting Device Health Monitoring API...")
+    print(f"  Listening on port {port}")
     print("Endpoints:")
     print("  GET  /health        - Health check")
     print("  POST /analyze       - Analyze uploaded file")
     print("  GET  /analyze/demo  - Demo with sample files (?type=normal|faulty)")
-    app.run(debug=True, port=5000)
+    app.run(host='0.0.0.0', port=port, debug=os.environ.get('FLASK_DEBUG', 'false').lower() == 'true')

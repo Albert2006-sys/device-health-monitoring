@@ -1,6 +1,6 @@
 import { AnalysisResult } from '../types/analysis';
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 export const analyzeFile = async (file: File): Promise<AnalysisResult> => {
     const formData = new FormData();

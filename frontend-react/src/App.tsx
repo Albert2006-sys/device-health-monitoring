@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
-import { ArrowDown, Sparkles, FileText, Layers, Mic2 } from 'lucide-react';
+import { ArrowDown, ArrowLeft, Sparkles, FileText, Mic2 } from 'lucide-react';
 
 import { useAnalysis } from './hooks/useAnalysis';
 import { Navbar } from './components/Navbar';
 import { HealthGauge } from './components/HealthGauge';
 import { StatusBadge } from './components/StatusBadge';
 import { MetricsDashboard } from './components/MetricsDashboard';
-import { AIReasoning } from './components/AIReasoning';
 import { FileUpload } from './components/FileUpload';
 import { DemoButtons } from './components/DemoButtons';
 import { DocsModal } from './components/DocsModal';
@@ -17,17 +16,20 @@ import { PhysicsValidation } from './components/PhysicsValidation';
 import { FailureFingerprint } from './components/FailureFingerprint';
 import { MaintenanceAdvice } from './components/MaintenanceAdvice';
 import { WaveformVisualization } from './components/WaveformVisualization';
-import { FailurePrediction } from './components/FailurePrediction';
+import { MaintenanceDecisionSummary } from './components/MaintenanceDecisionSummary';
 import { LiveRecording } from './components/LiveRecording';
 import { BatchAnalysis } from './components/BatchAnalysis';
+import { DeployToDevice } from './components/DeployToDevice';
+import { LiveDeviceMonitor } from './components/LiveDeviceMonitor';
 import { generatePDFReport } from './utils/reportGenerator';
 import { AnalysisResult } from './types/analysis';
 
 function App() {
   const { result, loading, analyze, runDemo, reset, setResult } = useAnalysis();
   const [loadingType, setLoadingType] = useState<'normal' | 'faulty' | null>(null);
-  const [analysisMode, setAnalysisMode] = useState<'single' | 'batch'>('single');
+  const [analysisMode, setAnalysisMode] = useState<'single' | 'batch' | 'deploy' | 'live'>('single');
   const [uploadedFilename, setUploadedFilename] = useState<string>('');
+  const [showRecorder, setShowRecorder] = useState(false);
 
   // Modal states
   const [docsOpen, setDocsOpen] = useState(false);
@@ -79,6 +81,10 @@ function App() {
       <Navbar
         onDocsClick={() => setDocsOpen(true)}
         onApiClick={() => setApiOpen(true)}
+        onBatchClick={() => { setAnalysisMode('batch'); setShowRecorder(false); reset(); }}
+        onDeployClick={() => { setAnalysisMode('deploy'); setShowRecorder(false); reset(); }}
+        onLiveClick={() => { setAnalysisMode('live'); setShowRecorder(false); reset(); }}
+        onLogoClick={() => { setAnalysisMode('single'); setShowRecorder(false); reset(); }}
       />
 
       {/* Modals */}
@@ -90,33 +96,22 @@ function App() {
       <ApiModal isOpen={apiOpen} onClose={() => setApiOpen(false)} />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
-        {/* Mode Tabs */}
-        <motion.div
-          className="flex justify-center gap-4 mb-8"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <button
-            onClick={() => { setAnalysisMode('single'); reset(); }}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all ${analysisMode === 'single'
-              ? 'bg-primary-blue/20 text-primary-blue border border-primary-blue'
-              : 'glass-card text-gray-400 hover:text-white'
-              }`}
+        {/* Back button - only visible in non-home views */}
+        {analysisMode !== 'single' && (
+          <motion.div
+            className="flex justify-center mb-8"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
           >
-            <FileText size={20} />
-            Single Analysis
-          </button>
-          <button
-            onClick={() => { setAnalysisMode('batch'); reset(); }}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all ${analysisMode === 'batch'
-              ? 'bg-primary-blue/20 text-primary-blue border border-primary-blue'
-              : 'glass-card text-gray-400 hover:text-white'
-              }`}
-          >
-            <Layers size={20} />
-            Batch Analysis
-          </button>
-        </motion.div>
+            <button
+              onClick={() => { setAnalysisMode('single'); setShowRecorder(false); reset(); }}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium text-gray-400 hover:text-white glass-card hover:bg-white/10 transition-all"
+            >
+              <ArrowLeft size={18} />
+              Back to Home
+            </button>
+          </motion.div>
+        )}
 
         <AnimatePresence mode="wait">
           {analysisMode === 'batch' ? (
@@ -127,6 +122,24 @@ function App() {
               exit={{ opacity: 0, x: -50 }}
             >
               <BatchAnalysis />
+            </motion.div>
+          ) : analysisMode === 'deploy' ? (
+            <motion.div
+              key="deploy"
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -50 }}
+            >
+              <DeployToDevice />
+            </motion.div>
+          ) : analysisMode === 'live' ? (
+            <motion.div
+              key="live"
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -50 }}
+            >
+              <LiveDeviceMonitor />
             </motion.div>
           ) : (
             <motion.div
@@ -185,18 +198,59 @@ function App() {
                   disabled={loading}
                 />
 
-                {/* Live Recording Section */}
-                {!result && !loading && (
-                  <div className="mt-12">
-                    <div className="flex items-center gap-4 my-8 max-w-md mx-auto">
+                {/* Live Recording - morphing button/panel */}
+                {!loading && (
+                  <div className="mt-8">
+                    {/* "or" divider text */}
+                    <div className="flex items-center gap-4 my-6 max-w-md mx-auto">
                       <div className="flex-1 h-px bg-gradient-to-r from-transparent to-gray-600" />
-                      <span className="text-gray-500 text-sm flex items-center gap-2">
-                        <Mic2 size={16} />
-                        or record live
-                      </span>
+                      <span className="text-gray-500 text-sm">or</span>
                       <div className="flex-1 h-px bg-gradient-to-l from-transparent to-gray-600" />
                     </div>
-                    <LiveRecording onResult={handleLiveResult} />
+
+                    {/* Morphing container: button → full recorder */}
+                    <motion.div
+                      layout
+                      className="max-w-xl mx-auto"
+                      transition={{ layout: { duration: 0.4, ease: 'easeInOut' } }}
+                    >
+                      <AnimatePresence mode="wait">
+                        {!showRecorder ? (
+                          <motion.button
+                            key="record-btn"
+                            layout
+                            onClick={() => setShowRecorder(true)}
+                            className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-2xl glass-card text-gray-400 hover:text-white hover:border-primary-red/40 border border-white/10 transition-all font-medium cursor-pointer"
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <Mic2 size={20} className="text-primary-red" />
+                            Record Live Audio
+                          </motion.button>
+                        ) : (
+                          <motion.div
+                            key="recorder-panel"
+                            layout
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <LiveRecording onResult={handleLiveResult} />
+                            <div className="flex justify-center mt-3">
+                              <button
+                                onClick={() => setShowRecorder(false)}
+                                className="text-gray-500 text-xs hover:text-gray-300 transition-colors cursor-pointer"
+                              >
+                                Collapse
+                              </button>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
                   </div>
                 )}
               </motion.section>
@@ -267,35 +321,21 @@ function App() {
                       />
                     )}
 
-                    {/* Failure Prediction - NEW FEATURE 2 */}
-                    <FailurePrediction
-                      currentHealth={result.health_score}
+                    {/* Maintenance Decision Summary - Condition-Based */}
+                    <MaintenanceDecisionSummary
+                      status={result.status}
+                      confidence={result.confidence}
                       anomalyScore={result.anomaly_score}
-                      threshold={result.reasoning_data?.threshold || 0.05}
                       failureType={result.failure_type}
+                      physicsValidation={result.physics_validation}
+                      explanation={result.explanation}
                     />
-
-                    {/* Explanation Card */}
-                    <motion.div
-                      className="glass-card p-6 rounded-xl border border-white/10"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.5 }}
-                    >
-                      <p className={`text-lg ${result.status === 'normal' ? 'text-primary-green' : 'text-primary-red'
-                        }`}>
-                        {result.explanation}
-                      </p>
-                    </motion.div>
 
                     {/* Fingerprint and Maintenance Grid */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                       <FailureFingerprint fingerprint={result.failure_fingerprint} />
                       <MaintenanceAdvice advice={result.maintenance_advice} />
                     </div>
-
-                    {/* AI Reasoning */}
-                    <AIReasoning data={result} />
 
                     {/* Action Buttons */}
                     <motion.div

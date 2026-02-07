@@ -140,7 +140,7 @@ export const generatePDFReport = (result: AnalysisResult, filename: string) => {
     doc.setTextColor(150, 150, 150);
     doc.setFont('helvetica', 'italic');
     doc.text(
-        'Device Health Monitoring System | AI-Powered Predictive Maintenance',
+        'Device Health Monitoring System | Condition-Based Maintenance',
         pageWidth / 2,
         pageHeight - 10,
         { align: 'center' }

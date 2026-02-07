@@ -1,0 +1,18 @@
+{
+    "0": "healthy_car_diagnostics_dataset_idle_state_low_oil",
+    "1": "healthy_car_diagnostics_dataset_idle_state_normal_engine_idle",
+    "2": "healthy_car_diagnostics_dataset_startup_state_normal_engine_startup",
+    "3": "healthy_car_diagnostics_dataset_idle_state_combined_no_oil_serpentine_belt",
+    "4": "healthy_car_diagnostics_dataset_idle_state_combined_power_steering_combined_no_oil_serpentine_belt",
+    "5": "healthy_car_diagnostics_dataset_idle_state_power_steering",
+    "6": "healthy_car_diagnostics_dataset_idle_state_combined_power_steering_combined_no_oil",
+    "7": "healthy_car_diagnostics_dataset_idle_state_serpentine_belt",
+    "8": "healthy_car_diagnostics_dataset_braking_state_normal_brakes",
+    "9": "healthy_car_diagnostics_dataset_idle_state_combined_power_steering_combined_serpentine_belt",
+    "10": "anomalous_car_diagnostics_dataset_braking_state_worn_out_brakes",
+    "11": "anomalous_car_diagnostics_dataset_startup_state_bad_ignition",
+    "12": "anomalous_car_diagnostics_dataset_startup_state_dead_battery",
+    "13": "anomalous_cars",
+    "14": "anomalous_ai_mechanic_export_training",
+    "15": "anomalous_ai_mechanic_export_testing"
+}
