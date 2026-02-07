@@ -21,7 +21,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'utils'))
 from analyze import MachineHealthAnalyzer
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}},
+     supports_credentials=False,
+     allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
+     methods=["GET", "POST", "OPTIONS"])
 
 # Initialize analyzer once on startup
 analyzer = None
