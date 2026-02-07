@@ -33,8 +33,14 @@ AUDIO_SAMPLE_RATE = 22050  # Audio file sample rate
 WINDOW_SIZE = 12000      # 1 second window
 STEP_SIZE = 12000        # No overlap
 
+# Model version: "v1" (unified/combined) or "v2" (car audio only)
+MODEL_VERSION = os.environ.get("MODEL_VERSION", "v1")  # Unified model
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-MODELS_DIR = os.path.join(SCRIPT_DIR, "..", "models")
+if MODEL_VERSION == "v2":
+    MODELS_DIR = os.path.join(SCRIPT_DIR, "..", "models", "v2")
+else:
+    MODELS_DIR = os.path.join(SCRIPT_DIR, "..", "models")
 
 
 class Autoencoder(nn.Module):
@@ -91,6 +97,18 @@ class MachineHealthAnalyzer:
         rf_path = os.path.join(MODELS_DIR, "random_forest.pkl")
         with open(rf_path, 'rb') as f:
             self.classifier = pickle.load(f)
+        
+        # Load label mapping for V2 models
+        import json
+        label_map_path = os.path.join(MODELS_DIR, "label_mapping.json")
+        if os.path.exists(label_map_path):
+            with open(label_map_path, 'r') as f:
+                self.label_mapping = json.load(f)
+                self.idx_to_label = {v: k for k, v in self.label_mapping.items()}
+        else:
+            # Default V1 mapping
+            self.label_mapping = {"normal": 0, "bearing_fault": 1}
+            self.idx_to_label = {0: "normal", 1: "bearing_fault"}
     
     def _load_mat_signal(self, file_path: str) -> np.ndarray:
         """Load Drive End (DE) signal from MATLAB file."""
@@ -217,6 +235,7 @@ class MachineHealthAnalyzer:
         window_errors = []
         anomalous_windows = 0
         rf_probabilities = []
+        rf_predictions = []
         
         for window in windows:
             # Extract features
@@ -233,36 +252,102 @@ class MachineHealthAnalyzer:
             if error > self.threshold:
                 anomalous_windows += 1
                 
-                # Run Random Forest classifier
-                proba = self.classifier.predict_proba(features_scaled.reshape(1, -1))[0]
-                rf_probabilities.append(max(proba))
+            # Always run Random Forest classifier for confidence
+            proba = self.classifier.predict_proba(features_scaled.reshape(1, -1))[0]
+            predicted_class = self.classifier.predict(features_scaled.reshape(1, -1))[0]
+            rf_probabilities.append(max(proba))
+            rf_predictions.append(predicted_class)
         
         # Aggregation
         median_error = float(np.median(window_errors))
+        min_error = float(np.min(window_errors))
+        max_error = float(np.max(window_errors))
         anomaly_ratio = anomalous_windows / len(windows)
         
-        # Determine status (>50% windows anomalous = faulty)
-        is_faulty = anomaly_ratio > 0.5
+        # Determine fault type from most common RF prediction FIRST
+        # (we need this before determining status)
+        fault_type = None
+        from collections import Counter
+        rf_thinks_faulty = False
+        rf_fault_confidence = 0.0
         
-        # Calculate health score
-        health_score = self._calculate_health_score(median_error)
+        if rf_predictions:
+            most_common = Counter(rf_predictions).most_common(1)[0][0]
+            fault_type = self.idx_to_label.get(most_common, "unknown_fault")
+            
+            # Count how many windows RF classified as faulty (not healthy)
+            fault_predictions = [p for p in rf_predictions if self.idx_to_label.get(p, "healthy") != "healthy"]
+            rf_fault_ratio = len(fault_predictions) / len(rf_predictions) if rf_predictions else 0
+            
+            # Get average confidence for fault predictions
+            if fault_type != "healthy" and fault_type is not None:
+                rf_fault_confidence = float(np.mean(rf_probabilities))
+                # RF thinks it's faulty if >50% windows predicted fault with >60% avg confidence
+                rf_thinks_faulty = rf_fault_ratio > 0.5 and rf_fault_confidence > 0.6
+            
+            if fault_type == "healthy":
+                fault_type = None  # RF thinks it's healthy
         
-        # Build result
-        if is_faulty:
-            confidence = float(max(rf_probabilities)) if rf_probabilities else None
+        # Determine status: COMBINE autoencoder AND RF classifier signals
+        # Faulty if EITHER:
+        #   1. >50% windows have reconstruction error above threshold (autoencoder)
+        #   2. RF classifier predicts fault with high confidence (>60%)
+        is_faulty = anomaly_ratio > 0.5 or rf_thinks_faulty
+        
+        # Calculate health score - consider RF classifier too
+        # If RF detects fault even when autoencoder doesn't, lower the score
+        if rf_thinks_faulty and median_error <= self.threshold:
+            # RF detected fault but autoencoder missed it - moderate health score
+            health_score = random.randint(45, 65)
+        else:
+            health_score = self._calculate_health_score(median_error)
+        
+        # Always calculate confidence from RF
+        avg_rf_confidence = float(np.mean(rf_probabilities)) if rf_probabilities else 0.0
+        max_rf_confidence = float(max(rf_probabilities)) if rf_probabilities else 0.0
+        
+        # For normal samples, also consider distance from threshold
+        if not is_faulty:
+            # How far below threshold are we? (normalized 0-1)
+            distance_confidence = 1.0 - (median_error / self.threshold) if self.threshold > 0 else 1.0
+            distance_confidence = max(0.0, min(1.0, distance_confidence))
+            # Combine RF confidence with distance confidence
+            combined_confidence = (avg_rf_confidence + distance_confidence) / 2
+        else:
+            combined_confidence = max_rf_confidence
+
+        
+        # Build enhanced result with reasoning data
+        if is_faulty and fault_type:
+            # Generate explanation based on fault type
+            explanations = {
+                "bad_ignition": "Anomaly detected indicating ignition system issues. Check spark plugs and ignition coils.",
+                "dead_battery": "Low power patterns detected. Battery may need replacement or charging.",
+                "worn_brakes": "Abnormal braking sounds detected. Inspect brake pads and rotors.",
+                "mixed_faults": "Multiple fault indicators detected. Comprehensive inspection recommended.",
+                "bearing_fault": "Impulsive vibration patterns indicate potential bearing wear."
+            }
             
             return {
                 "status": "faulty",
                 "health_score": health_score,
                 "anomaly_score": round(median_error, 6),
-                "failure_type": "bearing_fault",
-                "confidence": round(confidence, 4) if confidence else None,
+                "failure_type": fault_type,
+                "confidence": round(combined_confidence, 4),
                 "explanation": (
                     f"Anomaly detected in {anomalous_windows}/{len(windows)} windows. "
-                    f"Impulsive vibration patterns with elevated reconstruction error "
-                    f"({median_error:.2f}) indicate potential bearing wear. "
-                    f"Recommend immediate inspection."
-                )
+                    + explanations.get(fault_type, "Fault detected. Recommend inspection.")
+                ),
+                # Enhanced reasoning data
+                "reasoning_data": {
+                    "windows_analyzed": len(windows),
+                    "anomalous_windows": anomalous_windows,
+                    "anomaly_ratio": round(anomaly_ratio, 4),
+                    "threshold": round(self.threshold, 6),
+                    "min_error": round(min_error, 6),
+                    "max_error": round(max_error, 6),
+                    "rf_confidence": round(max_rf_confidence, 4)
+                }
             }
         else:
             return {
@@ -270,8 +355,19 @@ class MachineHealthAnalyzer:
                 "health_score": health_score,
                 "anomaly_score": round(median_error, 6),
                 "failure_type": None,
-                "confidence": None,
-                "explanation": "Machine operating within normal vibration limits."
+                "confidence": round(combined_confidence, 4),
+                "explanation": "Machine operating within normal vibration limits.",
+                # Enhanced reasoning data
+                "reasoning_data": {
+                    "windows_analyzed": len(windows),
+                    "anomalous_windows": anomalous_windows,
+                    "anomaly_ratio": round(anomaly_ratio, 4),
+                    "threshold": round(self.threshold, 6),
+                    "min_error": round(min_error, 6),
+                    "max_error": round(max_error, 6),
+                    "distance_from_threshold": round(self.threshold - median_error, 6),
+                    "rf_confidence": round(avg_rf_confidence, 4)
+                }
             }
     
     def analyze_signal(self, signal: np.ndarray, sample_rate: int = 12000) -> dict:

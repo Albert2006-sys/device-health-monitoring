@@ -55,7 +55,14 @@
                     <span class="health-label">Health Score</span>
                     <span class="health-score" id="health-score">—</span>
                 </div>
-                <div class="status-badge" id="status-badge">—</div>
+                <div class="badges-row">
+                    <div class="status-badge" id="status-badge">—</div>
+                    <div class="confidence-badge" id="confidence-badge"
+                        title="Confidence reflects model certainty, not severity">
+                        <span class="confidence-icon">●</span>
+                        <span class="confidence-text">—</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Details Card -->
@@ -85,6 +92,19 @@
             <!-- Explanation -->
             <div class="explanation-card" id="explanation-card">
                 <p id="explanation-text">—</p>
+            </div>
+
+            <!-- AI Reasoning Section (Collapsible) -->
+            <div class="reasoning-section" id="reasoning-section">
+                <button class="reasoning-toggle" onclick="toggleReasoning()">
+                    <span class="reasoning-title">🔍 AI Reasoning</span>
+                    <span class="toggle-icon" id="toggle-icon">▼</span>
+                </button>
+                <div class="reasoning-content hidden" id="reasoning-content">
+                    <ul class="reasoning-list" id="reasoning-list">
+                        <!-- Populated by JavaScript -->
+                    </ul>
+                </div>
             </div>
         </div>
 
