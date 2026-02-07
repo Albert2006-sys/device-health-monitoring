@@ -1,8 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Copy, Check, Terminal, Server, Zap, Database } from 'lucide-react';
 import { useState } from 'react';
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+import { API_BASE } from '../services/api';
 
 interface ApiModalProps {
     isOpen: boolean;

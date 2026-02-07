@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AnalysisResult } from '../types/analysis';
+import { API_BASE } from '../services/api';
 
 interface BatchResult {
     filename: string;
@@ -34,7 +35,7 @@ export const BatchAnalysis = () => {
                 const formData = new FormData();
                 formData.append('file', file);
 
-                const response = await fetch('http://127.0.0.1:5000/analyze', {
+                const response = await fetch(`${API_BASE}/analyze`, {
                     method: 'POST',
                     body: formData,
                 });
