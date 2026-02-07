@@ -1,0 +1,145 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Rajdhani:wght@500;600;700&display=swap');
+
+@theme {
+  --color-primary-blue: #00D9FF;
+  --color-primary-red: #FF0055;
+  --color-primary-green: #00FF9F;
+  --color-dark-1: #0A0E27;
+  --color-dark-2: #1A1F3A;
+  --color-dark-3: #2A2F4A;
+
+  --font-heading: 'Rajdhani', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(135deg, #0A0E27 0%, #1A1F3A 100%);
+  min-height: 100vh;
+  color: #FFFFFF;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0A0E27;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00D9FF;
+}
+
+/* Glass card effect */
+.glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+}
+
+/* Glow effects */
+.glow-blue {
+  box-shadow: 0 0 15px rgba(0, 217, 255, 0.3),
+    0 0 30px rgba(0, 217, 255, 0.1);
+}
+
+.glow-green {
+  box-shadow: 0 0 15px rgba(0, 255, 159, 0.3),
+    0 0 30px rgba(0, 255, 159, 0.1);
+}
+
+.glow-red {
+  box-shadow: 0 0 15px rgba(255, 0, 85, 0.3),
+    0 0 30px rgba(255, 0, 85, 0.1);
+}
+
+/* Text gradients */
+.text-gradient-blue {
+  background: linear-gradient(135deg, #00D9FF 0%, #00FF9F 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-red {
+  background: linear-gradient(135deg, #FF0055 0%, #FF8C00 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Animated background grid */
+.bg-grid {
+  background-image:
+    linear-gradient(rgba(0, 217, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 217, 255, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  background-position: -1px -1px;
+}
+
+/* Color utilities for Tailwind v4 */
+.text-primary-blue {
+  color: #00D9FF;
+}
+
+.text-primary-red {
+  color: #FF0055;
+}
+
+.text-primary-green {
+  color: #00FF9F;
+}
+
+.bg-primary-blue {
+  background-color: #00D9FF;
+}
+
+.bg-primary-red {
+  background-color: #FF0055;
+}
+
+.bg-primary-green {
+  background-color: #00FF9F;
+}
+
+.bg-dark-1 {
+  background-color: #0A0E27;
+}
+
+.bg-dark-2 {
+  background-color: #1A1F3A;
+}
+
+.bg-dark-3 {
+  background-color: #2A2F4A;
+}
+
+.font-heading {
+  font-family: 'Rajdhani', sans-serif;
+}
+
+.font-body {
+  font-family: 'Inter', sans-serif;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}

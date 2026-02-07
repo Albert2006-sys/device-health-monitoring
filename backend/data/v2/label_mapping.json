@@ -1,0 +1,7 @@
+{
+  "bad_ignition": 1,
+  "dead_battery": 2,
+  "mixed_faults": 3,
+  "worn_brakes": 4,
+  "healthy": 0
+}
