@@ -90,7 +90,7 @@ def analyze_file():
             }), 400
         
         # Validate file extension
-        valid_extensions = ['.mat', '.wav', '.mp3', '.flac', '.mp4', '.avi', '.mov', '.mkv', '.m4a', '.m4v']
+        valid_extensions = ['.mat', '.wav', '.mp3', '.flac', '.mp4', '.avi', '.mov', '.mkv', '.m4a', '.m4v', '.webm']
         if not any(file_path.lower().endswith(ext) for ext in valid_extensions):
             if temp_file:
                 try:
@@ -103,7 +103,14 @@ def analyze_file():
         
         # Run inference
         analysis = get_analyzer()
-        result = analysis.analyze(file_path)
+        try:
+            result = analysis.analyze(file_path)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return jsonify({
+                "error": f"Analysis failed: {str(e)}"
+            }), 500
         
         # Clean up temp file
         if temp_file:

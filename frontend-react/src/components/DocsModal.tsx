@@ -100,6 +100,15 @@ export const DocsModal: React.FC<DocsModalProps> = ({ isOpen, onClose, onLoadRes
                                                 The Device Health Monitoring System is an AI-powered predictive maintenance solution
                                                 that analyzes audio and vibration signals to detect machine faults before they cause failures.
                                             </p>
+                                            <div className="mt-3 p-3 bg-primary-blue/10 border border-primary-blue/30 rounded-lg">
+                                                <p className="text-sm text-primary-blue font-medium">
+                                                    🔬 Physics-Informed Machine Learning (PIML)
+                                                </p>
+                                                <p className="text-xs text-gray-300 mt-1">
+                                                    This system combines data-driven ML models with mechanical validation to improve
+                                                    trust and explainability. Predictions are verified against known mechanical behavior.
+                                                </p>
+                                            </div>
                                         </section>
 
                                         <section className="glass-card p-4 rounded-xl">
@@ -138,6 +147,42 @@ export const DocsModal: React.FC<DocsModalProps> = ({ isOpen, onClose, onLoadRes
                                                 <p><span className="text-primary-green">Random Forest:</span> Fault classification (93% accuracy)</p>
                                                 <p><span className="text-gray-400">Training:</span> 1,431 samples across 6 fault types</p>
                                                 <p><span className="text-gray-400">Features:</span> 13 sensor-agnostic signal features</p>
+                                            </div>
+                                        </section>
+
+                                        <section className="glass-card p-4 rounded-xl border border-yellow-500/30">
+                                            <h4 className="text-yellow-400 font-medium mb-3">🛡️ How the System Handles Unknown Audio</h4>
+                                            <div className="space-y-3 text-sm text-gray-300">
+                                                <p className="leading-relaxed">
+                                                    <strong className="text-white">Our system is designed for machine health monitoring, not general audio classification.</strong>
+                                                </p>
+                                                <p className="leading-relaxed">
+                                                    If a completely unseen sound is uploaded, the anomaly detector flags it and the confidence drops, preventing false diagnosis.
+                                                </p>
+                                                <div className="bg-dark-1 p-3 rounded-lg border border-white/5">
+                                                    <p className="text-xs text-gray-400 mb-2">When unknown audio is detected:</p>
+                                                    <ul className="space-y-1 text-xs">
+                                                        <li className="flex items-center gap-2">
+                                                            <span className="text-primary-red">●</span>
+                                                            <span>Status marked as "Faulty" (anomalous)</span>
+                                                        </li>
+                                                        <li className="flex items-center gap-2">
+                                                            <span className="text-yellow-400">●</span>
+                                                            <span>No specific fault type assigned</span>
+                                                        </li>
+                                                        <li className="flex items-center gap-2">
+                                                            <span className="text-yellow-400">●</span>
+                                                            <span>Confidence intentionally lowered</span>
+                                                        </li>
+                                                        <li className="flex items-center gap-2">
+                                                            <span className="text-primary-green">●</span>
+                                                            <span>Clear warning shown to user</span>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                                <p className="text-xs text-gray-500 italic">
+                                                    This ensures safety and prevents false alarms when non-machine audio is analyzed.
+                                                </p>
                                             </div>
                                         </section>
                                     </div>
@@ -227,8 +272,8 @@ export const DocsModal: React.FC<DocsModalProps> = ({ isOpen, onClose, onLoadRes
                                                             animate={{ opacity: 1, y: 0 }}
                                                         >
                                                             <div className={`p-2 rounded-lg ${status === 'normal'
-                                                                    ? 'bg-primary-green/20 text-primary-green'
-                                                                    : 'bg-primary-red/20 text-primary-red'
+                                                                ? 'bg-primary-green/20 text-primary-green'
+                                                                : 'bg-primary-red/20 text-primary-red'
                                                                 }`}>
                                                                 {status === 'normal' ? (
                                                                     <CheckCircle className="w-5 h-5" />
@@ -244,7 +289,7 @@ export const DocsModal: React.FC<DocsModalProps> = ({ isOpen, onClose, onLoadRes
 
                                                             <div className="text-right">
                                                                 <p className={`font-mono font-bold ${healthScore >= 80 ? 'text-primary-green' :
-                                                                        healthScore >= 60 ? 'text-yellow-400' : 'text-primary-red'
+                                                                    healthScore >= 60 ? 'text-yellow-400' : 'text-primary-red'
                                                                     }`}>
                                                                     {healthScore}
                                                                 </p>

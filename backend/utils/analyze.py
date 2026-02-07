@@ -26,6 +26,13 @@ import librosa
 # Import feature extractor
 from feature_extractor import extract_features
 
+# Import physics validator for PIML
+from physics_validator import validate_physics, generate_physics_explanation
+
+# Import fingerprint and maintenance modules
+from fingerprint_generator import generate_fingerprint
+from maintenance_advisor import generate_maintenance_advice
+
 
 # Configuration
 SAMPLE_RATE = 12000      # CWRU dataset sample rate
@@ -69,7 +76,7 @@ class MachineHealthAnalyzer:
     """
     Machine health analysis using window-based aggregation.
     
-    Supports: .mat, .wav, .mp3, .mp4, .m4a, .flac files
+    Supports: .mat, .wav, .mp3, .mp4, .m4a, .flac, .webm files
     """
     
     def __init__(self):
@@ -131,22 +138,24 @@ class MachineHealthAnalyzer:
         """Load audio signal from audio/video files (WAV, MP3, MP4, etc.)."""
         file_ext = os.path.splitext(file_path)[1].lower()
         
-        # For video files (MP4, AVI, etc.), extract audio using moviepy
-        if file_ext in ['.mp4', '.avi', '.mov', '.mkv', '.m4v']:
+        if file_ext in ['.mp4', '.avi', '.mov', '.mkv', '.m4v', '.webm']:
             try:
-                from moviepy import VideoFileClip
-                video = VideoFileClip(file_path)
-                audio = video.audio
+                try:
+                    # Try v2 import first (no .editor)
+                    from moviepy import AudioFileClip
+                except ImportError:
+                    # Fallback to v1 import
+                    from moviepy.editor import AudioFileClip
                 
-                if audio is None:
-                    raise ValueError("Video file has no audio track")
+                # Use AudioFileClip which works for both video and audio-only files
+                clip = AudioFileClip(file_path)
                 
                 # Write to temp WAV file and load with librosa
                 import tempfile
                 temp_wav = tempfile.NamedTemporaryFile(suffix='.wav', delete=False)
                 temp_wav.close()
-                audio.write_audiofile(temp_wav.name, fps=AUDIO_SAMPLE_RATE, verbose=False, logger=None)
-                video.close()
+                clip.write_audiofile(temp_wav.name, fps=AUDIO_SAMPLE_RATE, logger=None)
+                clip.close()
                 
                 # Load the extracted audio
                 signal, sr = librosa.load(temp_wav.name, sr=AUDIO_SAMPLE_RATE)
@@ -155,6 +164,14 @@ class MachineHealthAnalyzer:
                 return signal, sr
             except ImportError:
                 raise ValueError("moviepy not installed. Install with: pip install moviepy")
+            except Exception as e:
+                print(f"MoviePy failed: {e}. Trying librosa directly...")
+                # Fallback: try librosa directly. Librosa uses ffmpeg/soundfile and might handle it.
+                try:
+                    signal, sr = librosa.load(file_path, sr=AUDIO_SAMPLE_RATE)
+                    return signal, sr
+                except Exception as librosa_e:
+                    raise ValueError(f"Failed to process audio/video file. MoviePy error: {str(e)}. Librosa error: {str(librosa_e)}")
         
         # For audio files (WAV, MP3, FLAC, etc.), use librosa directly
         signal, sr = librosa.load(file_path, sr=AUDIO_SAMPLE_RATE)
@@ -237,9 +254,19 @@ class MachineHealthAnalyzer:
         rf_probabilities = []
         rf_predictions = []
         
+        # Physics validation: track key features across windows
+        dominant_freqs = []
+        spectral_kurtoses = []
+        all_features = []  # Store raw features for fingerprint generation
+        
         for window in windows:
             # Extract features
             features = np.array(extract_features(window, sr))
+            
+            # Store physics-relevant features (indices: 4=spectral_kurtosis, 5=dominant_freq)
+            spectral_kurtoses.append(features[4])
+            dominant_freqs.append(features[5])
+            all_features.append(features)  # Store for fingerprint
             
             # Scale features
             features_scaled = self.scaler.transform(features.reshape(1, -1)).flatten()
@@ -258,11 +285,27 @@ class MachineHealthAnalyzer:
             rf_probabilities.append(max(proba))
             rf_predictions.append(predicted_class)
         
+        # Compute median physics features for validation
+        median_dominant_freq = float(np.median(dominant_freqs))
+        median_spectral_kurtosis = float(np.median(spectral_kurtoses))
+        
         # Aggregation
         median_error = float(np.median(window_errors))
         min_error = float(np.min(window_errors))
         max_error = float(np.max(window_errors))
         anomaly_ratio = anomalous_windows / len(windows)
+        
+        # Generate per-window results for waveform visualization
+        window_results = []
+        for i in range(len(window_errors)):
+            window_results.append({
+                'start_time': float(i * 1.0),  # 1-second windows
+                'end_time': float((i + 1) * 1.0),
+                'reconstruction_error': float(window_errors[i]),
+                'is_anomalous': bool(window_errors[i] > self.threshold),
+                'predicted_class': self.idx_to_label.get(rf_predictions[i], 'unknown') if i < len(rf_predictions) else 'unknown',
+                'confidence': float(rf_probabilities[i]) if i < len(rf_probabilities) else 0.0
+            })
         
         # Determine fault type from most common RF prediction FIRST
         # (we need this before determining status)
@@ -317,8 +360,92 @@ class MachineHealthAnalyzer:
             combined_confidence = max_rf_confidence
 
         
+        # =====================================================
+        # OUT-OF-DISTRIBUTION DETECTION
+        # Detect when audio is outside the trained domain:
+        # - High anomaly score (autoencoder flags it)
+        # - Low RF confidence (classifier is uncertain)
+        # =====================================================
+        is_out_of_distribution = (
+            median_error > self.threshold * 2 and  # Very high anomaly
+            avg_rf_confidence < 0.6  # RF is not confident
+        ) or (
+            anomaly_ratio > 0.7 and  # Most windows are anomalous
+            max_rf_confidence < 0.5  # Even best prediction is uncertain
+        )
+        
+        # =====================================================
+        # PHYSICS-INFORMED ML VALIDATION
+        # Validate ML prediction against known mechanical behavior
+        # =====================================================
+        physics_result = validate_physics(
+            failure_type=fault_type,
+            dominant_freq=median_dominant_freq,
+            spectral_kurtosis=median_spectral_kurtosis,
+            anomaly_score=median_error,
+            is_faulty=is_faulty
+        )
+        
+        # Adjust confidence based on physics validation
+        if physics_result.get("confidence_modifier", 0) != 0:
+            combined_confidence = max(0.0, min(1.0, combined_confidence + physics_result["confidence_modifier"]))
+        
+        # =====================================================
+        # FAILURE FINGERPRINT GENERATION
+        # Visual signature comparing current vs healthy baseline
+        # =====================================================
+        fingerprint = generate_fingerprint(all_features, is_faulty)
+        
+        # =====================================================
+        # MAINTENANCE ADVICE GENERATION
+        # Actionable recommendations based on fault analysis
+        # =====================================================
+        maintenance = generate_maintenance_advice(
+            failure_type=fault_type,
+            is_faulty=is_faulty,
+            anomaly_score=median_error,
+            threshold=self.threshold,
+            confidence=combined_confidence,
+            physics_consistent=physics_result.get("consistent"),
+            out_of_distribution=is_out_of_distribution
+        )
+        
         # Build enhanced result with reasoning data
-        if is_faulty and fault_type:
+        if is_out_of_distribution:
+            # Unknown/unseen audio pattern - flag explicitly
+            return {
+                "status": "faulty",
+                "health_score": random.randint(25, 40),  # Low score
+                "anomaly_score": round(median_error, 6),
+                "failure_type": None,  # Do NOT force any fault label
+                "confidence": round(min(avg_rf_confidence, 0.4), 4),  # Cap confidence low
+                "out_of_distribution": True,
+                "explanation": (
+                    "The uploaded audio significantly deviates from learned machine vibration patterns. "
+                    "The system detected abnormal behavior but cannot confidently map it to a known fault type. "
+                    "This may indicate an unfamiliar sound source or recording conditions outside the training domain."
+                ),
+                "physics_validation": {
+                    "consistent": None,
+                    "reason": "Physics validation not applicable for out-of-distribution audio"
+                },
+                "reasoning_data": {
+                    "windows_analyzed": len(windows),
+                    "anomalous_windows": anomalous_windows,
+                    "anomaly_ratio": round(anomaly_ratio, 4),
+                    "threshold": round(self.threshold, 6),
+                    "min_error": round(min_error, 6),
+                    "max_error": round(max_error, 6),
+                    "rf_confidence": round(avg_rf_confidence, 4),
+                    "out_of_distribution": True,
+                    "reason": "High anomaly with low classifier confidence indicates unfamiliar audio pattern"
+                },
+                "failure_fingerprint": fingerprint,
+                "maintenance_advice": maintenance,
+                "window_results": window_results,
+                "audio_duration": float(len(windows))
+            }
+        elif is_faulty and fault_type:
             # Generate explanation based on fault type
             explanations = {
                 "bad_ignition": "Anomaly detected indicating ignition system issues. Check spark plugs and ignition coils.",
@@ -334,10 +461,17 @@ class MachineHealthAnalyzer:
                 "anomaly_score": round(median_error, 6),
                 "failure_type": fault_type,
                 "confidence": round(combined_confidence, 4),
+                "out_of_distribution": False,
                 "explanation": (
                     f"Anomaly detected in {anomalous_windows}/{len(windows)} windows. "
                     + explanations.get(fault_type, "Fault detected. Recommend inspection.")
                 ),
+                "physics_validation": {
+                    "consistent": physics_result.get("consistent"),
+                    "reason": physics_result.get("reason", ""),
+                    "observed": physics_result.get("observed", {}),
+                    "expected": physics_result.get("expected", {})
+                },
                 # Enhanced reasoning data
                 "reasoning_data": {
                     "windows_analyzed": len(windows),
@@ -346,8 +480,14 @@ class MachineHealthAnalyzer:
                     "threshold": round(self.threshold, 6),
                     "min_error": round(min_error, 6),
                     "max_error": round(max_error, 6),
-                    "rf_confidence": round(max_rf_confidence, 4)
-                }
+                    "rf_confidence": round(max_rf_confidence, 4),
+                    "dominant_frequency_hz": round(median_dominant_freq, 1),
+                    "spectral_kurtosis": round(median_spectral_kurtosis, 2)
+                },
+                "failure_fingerprint": fingerprint,
+                "maintenance_advice": maintenance,
+                "window_results": window_results,
+                "audio_duration": float(len(windows))
             }
         else:
             return {
@@ -356,7 +496,14 @@ class MachineHealthAnalyzer:
                 "anomaly_score": round(median_error, 6),
                 "failure_type": None,
                 "confidence": round(combined_confidence, 4),
+                "out_of_distribution": False,
                 "explanation": "Machine operating within normal vibration limits.",
+                "physics_validation": {
+                    "consistent": physics_result.get("consistent"),
+                    "reason": physics_result.get("reason", ""),
+                    "observed": physics_result.get("observed", {}),
+                    "expected": physics_result.get("expected", {})
+                },
                 # Enhanced reasoning data
                 "reasoning_data": {
                     "windows_analyzed": len(windows),
@@ -366,8 +513,14 @@ class MachineHealthAnalyzer:
                     "min_error": round(min_error, 6),
                     "max_error": round(max_error, 6),
                     "distance_from_threshold": round(self.threshold - median_error, 6),
-                    "rf_confidence": round(avg_rf_confidence, 4)
-                }
+                    "rf_confidence": round(avg_rf_confidence, 4),
+                    "dominant_frequency_hz": round(median_dominant_freq, 1),
+                    "spectral_kurtosis": round(median_spectral_kurtosis, 2)
+                },
+                "failure_fingerprint": fingerprint,
+                "maintenance_advice": maintenance,
+                "window_results": window_results,
+                "audio_duration": float(len(windows))
             }
     
     def analyze_signal(self, signal: np.ndarray, sample_rate: int = 12000) -> dict:

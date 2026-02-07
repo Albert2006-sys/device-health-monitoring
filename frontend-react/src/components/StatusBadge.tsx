@@ -1,11 +1,13 @@
 import { motion } from 'framer-motion';
-import { CheckCircle, AlertTriangle, Info } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Info, HelpCircle } from 'lucide-react';
 import { ConfidenceLevel } from '../types/analysis';
+import { useState } from 'react';
 
 interface StatusBadgeProps {
     status: 'normal' | 'faulty';
     confidence: number | null;
     failureType?: string | null;
+    outOfDistribution?: boolean;
 }
 
 const getConfidenceLevel = (confidence: number | null): ConfidenceLevel => {
@@ -32,8 +34,10 @@ const formatFailureType = (type: string | null | undefined): string => {
 export const StatusBadge: React.FC<StatusBadgeProps> = ({
     status,
     confidence,
-    failureType
+    failureType,
+    outOfDistribution = false
 }) => {
+    const [showTooltip, setShowTooltip] = useState(false);
     const isNormal = status === 'normal';
     const confidenceLevel = getConfidenceLevel(confidence);
     const conf = confidenceConfig[confidenceLevel];
@@ -67,8 +71,49 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
                             {formatFailureType(failureType)}
                         </p>
                     )}
+                    {outOfDistribution && !failureType && (
+                        <p className="text-sm text-yellow-400 font-mono">
+                            Unknown Pattern
+                        </p>
+                    )}
                 </div>
             </motion.div>
+
+            {/* Out-of-Distribution Warning */}
+            {outOfDistribution && (
+                <motion.div
+                    className="flex items-start gap-3 px-4 py-3 rounded-xl bg-yellow-500/10 border border-yellow-500/30"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                >
+                    <AlertTriangle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                        <p className="text-yellow-400 font-medium text-sm">
+                            Unseen audio pattern — diagnosis intentionally limited
+                        </p>
+                        <div className="relative inline-block mt-2">
+                            <button
+                                onMouseEnter={() => setShowTooltip(true)}
+                                onMouseLeave={() => setShowTooltip(false)}
+                                className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-300 transition-colors"
+                            >
+                                <HelpCircle className="w-3 h-3" />
+                                Why is this limited?
+                            </button>
+                            {showTooltip && (
+                                <div className="absolute bottom-full left-0 mb-2 p-3 bg-dark-1 border border-white/10 rounded-lg shadow-xl z-50 w-72">
+                                    <p className="text-xs text-gray-300 leading-relaxed">
+                                        This system is optimized for mechanical sounds (engines, bearings, brakes).
+                                        Non-machine audio may be flagged as anomalous without a specific diagnosis.
+                                        This is intentional safety behavior.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </motion.div>
+            )}
 
             {/* Confidence Badge */}
             <motion.div
